@@ -18,7 +18,7 @@ export function AppShell({ children, email, role }: { children: ReactNode; email
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
             <Image src="/logo-cruz-roja.svg" width={123} height={60} alt="Cruz Roja Colombiana Seccional Antioquia" priority />
-            <span className="hidden border-l border-border pl-3 text-sm font-semibold text-ink md:block">Análisis de causa raíz</span>
+            <span className="hidden border-l border-border pl-3 md:block"><Image src="/logo-6mq5.png" width={520} height={285} sizes="170px" className="h-auto w-[170px]" alt="6MQ5 — Análisis de Causas" priority /></span>
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-muted lg:block">{email}</span>
@@ -31,7 +31,7 @@ export function AppShell({ children, email, role }: { children: ReactNode; email
         </nav>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">{children}</main>
-      <footer className="border-t border-border bg-white py-5 text-center text-xs text-muted">Cruz Roja Colombiana Seccional Antioquia · Metodología 6M + 5 porqués</footer>
+      <footer className="border-t border-border bg-white py-5 text-center text-xs text-muted">Cruz Roja Colombiana Seccional Antioquia · Metodología 6M + 3 porqués</footer>
     </div>
   );
 }
