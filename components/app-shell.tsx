@@ -25,7 +25,7 @@ export function AppShell({ children, email, role }: { children: ReactNode; email
             <form action={logout}><button className="icon-button" title="Cerrar sesión"><LogOut size={18} /><span className="sr-only">Cerrar sesión</span></button></form>
           </div>
         </div>
-        <nav className="shell flex gap-1 overflow-x-auto pb-3">
+        <nav className="shell flex flex-wrap gap-1 pb-3">
           {NAVIGATION.map(({ href, label, icon: Icon }) => <Link className="nav-link" href={href} key={href}><Icon size={17} />{label}</Link>)}
           {role === "SUPERADMIN" ? <Link className="nav-link" href="/usuarios"><Users size={17} />Usuarios</Link> : null}
         </nav>
