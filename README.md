@@ -74,6 +74,20 @@ La columna `F` del formato valida contra la lista `"1, 2, 3"` con `allowBlank`, 
 
 Las seis categorías usan la misma fórmula sobre su propio bloque (`G30`, `G33`, `G36`, `G39`, `G42`, `G45`), y cada resultado ocupa una celda combinada de tres filas (`G30:G32`): una valoración por categoría.
 
+## Reporte público
+
+`/reportes` es la única ruta abierta: no lee sesión, no muestra navegación interna y solo expone las cuatro etapas del formulario. Al enviar devuelve el código institucional y nada más — nunca el identificador interno del registro.
+
+Controles aplicados:
+
+- El estado se fuerza a `EN_ANALISIS` en el servidor, así nadie puede radicar un análisis ya cerrado.
+- El registro queda sin `creatorId`, por lo que solo `ADMIN` y `SUPERADMIN` lo ven; un `USER` sigue viendo únicamente los propios.
+- Límite de 20 envíos por hora y por dirección, en memoria del proceso.
+
+El límite depende de que el proxy inverso reenvíe `X-Forwarded-For` (o `X-Real-IP`). Sin esa cabecera todos los envíos comparten un mismo contador. Como vive en memoria, no se comparte entre réplicas ni sobrevive a un reinicio; si el servicio escala horizontalmente hay que moverlo a un almacén compartido.
+
+El consecutivo anual se reserva de forma atómica, así que un envío descartado deja un hueco en la numeración. Es el comportamiento correcto para una secuencia auditable.
+
 ## Causas principales
 
 El formato deja las dos causas principales para que alguien las escriba a mano tras leer la columna de valoración (`AC-43!A54` es `=D49`). El sistema las deriva: toma las dos categorías 6M con mayor valoración, de mayor a menor, y desempata con el orden canónico del formato. La subcausa asociada se propone con la de mayor impacto de esa categoría y se puede editar. Cada causa principal admite tres porqués, como las columnas `POR QUÉ 1`, `POR QUÉ 2` y `POR QUÉ 3` de `AC-43!C53:G53`.

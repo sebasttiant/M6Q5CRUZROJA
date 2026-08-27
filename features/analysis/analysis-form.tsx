@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Plus, Save, Trash2 } from "lucide-react";
-import { createAnalysis } from "./actions";
+import { AlertCircle, CheckCircle2, Plus, Save, Trash2 } from "lucide-react";
+import { createAnalysis, createPublicAnalysis } from "./actions";
 import { ANALYSIS_STATUS, CATEGORIES, MAX_SUBCAUSES_PER_CATEGORY, WHY_FIELDS, type CategoryKey, type WhyField } from "./constants";
 import { analysisSchema } from "./schema";
 import { calculateValuation, rankMainCauseCandidates } from "./valuation";
@@ -29,11 +29,13 @@ function initialState(): FormState {
   };
 }
 
-export function AnalysisForm() {
+/** `public` renders the same four sections for anonymous reporters at /reportes. */
+export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "public" } = {}) {
   const router = useRouter();
   const [values, setValues] = useState<FormState>(initialState);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [savedCode, setSavedCode] = useState<string | null>(null);
 
   /** Section 03 is derived from section 02: the two highest valuations of the 6M block. */
   const candidates = useMemo(() => rankMainCauseCandidates(values.categories), [values.categories]);
@@ -90,10 +92,36 @@ export function AnalysisForm() {
       return;
     }
     setPending(true);
+    if (mode === "public") {
+      const result = await createPublicAnalysis(clientValidation.data);
+      setPending(false);
+      if (!result.ok || !result.code) { setError(result.error ?? "No se pudo guardar."); return; }
+      setSavedCode(result.code);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const result = await createAnalysis(clientValidation.data);
     setPending(false);
     if (!result.ok || !result.id) { setError(result.error ?? "No se pudo guardar."); return; }
     router.push(`/analisis/${result.id}`);
+  }
+
+  function startAnother() {
+    setSavedCode(null);
+    setValues(initialState());
+    setError(null);
+  }
+
+  if (savedCode) {
+    return (
+      <section className="panel text-center">
+        <CheckCircle2 className="mx-auto text-brand" size={44} />
+        <h2 className="mt-4 text-2xl font-black text-ink">Análisis registrado</h2>
+        <p className="mt-2 text-sm text-muted">Guarde este código para cualquier seguimiento con el equipo de calidad.</p>
+        <p className="mt-5 inline-block rounded-lg border border-border bg-canvas px-6 py-3 text-2xl font-black tracking-wide text-brand">{savedCode}</p>
+        <div className="mt-7"><button type="button" className="button button-secondary" onClick={startAnother}><Plus size={17} />Registrar otro análisis</button></div>
+      </section>
+    );
   }
 
   return (
@@ -106,7 +134,7 @@ export function AnalysisForm() {
           <label className="field">Correo *<input type="email" value={values.email} onChange={(event) => setField("email", event.target.value)} required /></label>
           <label className="field">Proceso *<input value={values.process} onChange={(event) => setField("process", event.target.value)} placeholder="Ej. Gestión del riesgo" required /></label>
           <label className="field">Fecha *<input type="date" value={values.eventDate} onChange={(event) => setField("eventDate", event.target.value)} required /></label>
-          <label className="field">Estado<select value={values.status} onChange={(event) => setField("status", event.target.value as FormState["status"])}><option value="BORRADOR">Borrador</option><option value="EN_ANALISIS">En análisis</option><option value="PENDIENTE_PLAN">Pendiente de plan</option><option value="CERRADO">Cerrado</option></select></label>
+          {mode === "public" ? null : <label className="field">Estado<select value={values.status} onChange={(event) => setField("status", event.target.value as FormState["status"])}><option value="BORRADOR">Borrador</option><option value="EN_ANALISIS">En análisis</option><option value="PENDIENTE_PLAN">Pendiente de plan</option><option value="CERRADO">Cerrado</option></select></label>}
         </div>
         <label className="field mt-4">Hallazgo *<textarea rows={4} value={values.finding} onChange={(event) => setField("finding", event.target.value)} placeholder="Describa claramente la situación, evidencia y alcance del hallazgo." required /></label>
       </section>
@@ -157,7 +185,7 @@ export function AnalysisForm() {
       </section>
 
       {error ? <div className="error-banner" role="alert"><AlertCircle size={20} />{error}</div> : null}
-      <div className="sticky bottom-4 flex justify-end"><button className="button button-primary shadow-xl" disabled={pending}><Save size={18} />{pending ? "Guardando…" : "Guardar análisis"}</button></div>
+      <div className="sticky bottom-4 flex justify-end"><button className="button button-primary shadow-xl" disabled={pending}><Save size={18} />{pending ? "Guardando…" : mode === "public" ? "Enviar análisis" : "Guardar análisis"}</button></div>
     </form>
   );
 }
