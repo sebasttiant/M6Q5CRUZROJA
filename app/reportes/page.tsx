@@ -5,7 +5,7 @@ import { AnalysisForm } from "@/features/analysis/analysis-form";
 
 export const metadata: Metadata = {
   title: "Reportar análisis",
-  description: "Formulario público de análisis de causa raíz con metodología 6M y tres porqués.",
+  description: "Formulario público de análisis de causa raíz con metodología 6M y cinco porqués.",
   robots: { index: false, follow: false },
 };
 
@@ -15,13 +15,13 @@ export default function PublicReportPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <header className="border-b border-border bg-white">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 py-6 text-center sm:flex-row sm:justify-between sm:gap-6 sm:text-left">
+        <div className="shell flex flex-col items-center gap-4 py-6 text-center sm:flex-row sm:justify-between sm:gap-6 sm:text-left">
           <Image src="/logo-6mq5.png" width={520} height={285} sizes="180px" className="h-auto w-[180px]" alt="6MQ5 — Análisis de Causas" priority />
           <p className="text-sm font-bold text-brand sm:text-base">Cruz Roja Colombiana Seccional Antioquia</p>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
+      <main className="shell py-8 lg:py-10">
         <div className="mb-7">
           <p className="eyebrow">Reporte institucional</p>
           <h1 className="text-3xl font-black text-ink">Análisis de causa raíz</h1>
@@ -32,7 +32,7 @@ export default function PublicReportPage() {
 
       <footer className="border-t border-border bg-white py-5 text-center text-xs text-muted">
         <p className="flex items-center justify-center gap-2"><ShieldCheck size={14} className="text-brand" />La información enviada es tratada por el equipo de calidad de la Seccional Antioquia.</p>
-        <p className="mt-1">Cruz Roja Colombiana Seccional Antioquia · Metodología 6M + 3 porqués</p>
+        <p className="mt-1">Cruz Roja Colombiana Seccional Antioquia · Metodología 6M + 5 porqués</p>
       </footer>
     </div>
   );

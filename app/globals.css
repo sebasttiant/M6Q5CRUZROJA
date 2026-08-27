@@ -22,6 +22,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .login-page { display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; background: linear-gradient(140deg, rgba(29,29,27,.98), rgba(29,29,27,.9)), radial-gradient(circle at top right, #cc0000, transparent 45%); }
 .login-card { width: min(100%, 29rem); border-radius: 1.5rem; background: white; padding: 2rem; box-shadow: 0 30px 80px rgba(0,0,0,.3); }
+.shell { width: 100%; max-width: 1800px; margin-inline: auto; padding-inline: 1rem; }
+@media (min-width: 640px) { .shell { padding-inline: 1.5rem; } }
+@media (min-width: 1280px) { .shell { padding-inline: 2.5rem; } }
+
 .eyebrow { margin-bottom: .45rem; color: var(--color-brand); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .panel { border: 1px solid var(--color-border); border-radius: 1.25rem; background: rgba(255,255,255,.96); padding: 1.25rem; box-shadow: 0 18px 50px -38px rgba(29,29,27,.5); }
 .section-heading { display: flex; align-items: flex-start; gap: .85rem; margin-bottom: 1.25rem; }

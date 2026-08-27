@@ -92,18 +92,25 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
       return;
     }
     setPending(true);
-    if (mode === "public") {
-      const result = await createPublicAnalysis(clientValidation.data);
+    try {
+      if (mode === "public") {
+        const result = await createPublicAnalysis(clientValidation.data);
+        if (!result.ok || !result.code) { setError(result.error ?? "No se pudo guardar."); return; }
+        setSavedCode(result.code);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      const result = await createAnalysis(clientValidation.data);
+      if (!result.ok || !result.id) { setError(result.error ?? "No se pudo guardar."); return; }
+      router.push(`/analisis/${result.id}`);
+    } catch (cause) {
+      // A stale tab after a deployment asks for a server action that no longer exists.
+      // Without this the button would stay on "Guardando…" forever with no explanation.
+      console.error("submit failed", cause);
+      setError("No se pudo enviar el formulario. Si la página estuvo abierta mucho tiempo, recárguela con Ctrl+Shift+R y vuelva a intentarlo.");
+    } finally {
       setPending(false);
-      if (!result.ok || !result.code) { setError(result.error ?? "No se pudo guardar."); return; }
-      setSavedCode(result.code);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
     }
-    const result = await createAnalysis(clientValidation.data);
-    setPending(false);
-    if (!result.ok || !result.id) { setError(result.error ?? "No se pudo guardar."); return; }
-    router.push(`/analisis/${result.id}`);
   }
 
   function startAnother() {
@@ -164,7 +171,7 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
       </section>
 
       <section className="panel">
-        <div className="section-heading"><span>03</span><div><h2>Causas principales y tres porqués</h2><p>Las causas se traen automáticamente: las dos categorías con mayor valoración en la sección 02.</p></div></div>
+        <div className="section-heading"><span>03</span><div><h2>Causas principales y cinco porqués</h2><p>Las causas se traen automáticamente: las dos categorías con mayor valoración en la sección 02.</p></div></div>
         {mainCauses.length === 0
           ? <p className="text-sm text-muted">Asigne impacto a por lo menos una subcausa en la sección 02 para que el sistema proponga las causas principales.</p>
           : <div className="space-y-5">

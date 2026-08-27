@@ -1,11 +1,12 @@
 # M6Q5 · Análisis de causa raíz
 
-MVP institucional para **Cruz Roja Colombiana Seccional Antioquia**. Digitaliza el análisis de causas con metodología 6M, valoración por impacto y tres porqués.
+MVP institucional para **Cruz Roja Colombiana Seccional Antioquia**. Digitaliza el análisis de causas con metodología 6M, valoración por impacto y los porqués del programa 6MQ5.
 
 ## Funcionalidades
 
 - Código anual concurrente `M6Q5-0001-2026` mediante secuencia atómica en PostgreSQL.
-- Registro completo: responsable, proceso, fecha, hallazgo, seis categorías con máximo tres subcausas cada una, dos causas principales, tres porqués y causa raíz.
+- Registro completo: responsable, proceso, fecha, hallazgo, seis categorías con máximo tres subcausas cada una, dos causas principales, sus porqués y causa raíz.
+- Exportación institucional a Excel (consolidado) y a PDF (un análisis por documento, listo para firmar).
 - Dashboard con KPIs, estados, valoración 6M, impacto, tendencia, filtros y registros recientes.
 - Listado, búsqueda, consulta de detalle, actualización de estado y exportación Excel.
 - Autenticación con contraseña scrypt y cookie HTTP-only firmada con expiración verificable de 12 horas.
@@ -90,7 +91,17 @@ El consecutivo anual se reserva de forma atómica, así que un envío descartado
 
 ## Causas principales
 
-El formato deja las dos causas principales para que alguien las escriba a mano tras leer la columna de valoración (`AC-43!A54` es `=D49`). El sistema las deriva: toma las dos categorías 6M con mayor valoración, de mayor a menor, y desempata con el orden canónico del formato. La subcausa asociada se propone con la de mayor impacto de esa categoría y se puede editar. Cada causa principal admite tres porqués, como las columnas `POR QUÉ 1`, `POR QUÉ 2` y `POR QUÉ 3` de `AC-43!C53:G53`.
+El formato deja las dos causas principales para que alguien las escriba a mano tras leer la columna de valoración (`AC-43!A54` es `=D49`). El sistema las deriva: toma las dos categorías 6M con mayor valoración, de mayor a menor, y desempata con el orden canónico del formato. La subcausa asociada se propone con la de mayor impacto de esa categoría y se puede editar. Cada causa principal admite tres campos de porqué, como las columnas `POR QUÉ 1`, `POR QUÉ 2` y `POR QUÉ 3` de `AC-43!C53:G53`.
+
+La interfaz habla de «cinco porqués» porque así se llama el programa institucional (6M + Q + 5). El formato fuente aporta tres columnas y el sistema conserva esas tres; la diferencia es de marca, no de datos.
+
+## Exportación a PDF
+
+`GET /api/export/pdf?id=<id>` entrega un documento A4 por análisis: encabezado con el logo y el código en cada página, identificación, la tabla 6M con valoraciones, las causas principales con sus porqués, la causa raíz destacada y un bloque de firmas.
+
+Requiere sesión y aplica `analysisScope`: un `USER` solo exporta los análisis que creó. Sin sesión responde `401`, sin identificador `400` y fuera de alcance `404`.
+
+Se genera con `pdfkit`. Sus métricas de fuente `.afm` se resuelven en tiempo de ejecución por una ruta que el trazado de Next no sigue, así que `next.config.ts` las incluye explícitamente con `outputFileTracingIncludes`; sin eso el build `standalone` falla al exportar. El smoke de integración lo verifica dentro del contenedor, no solo en local.
 
 ## Seguridad y operación
 
