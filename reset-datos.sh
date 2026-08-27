@@ -168,7 +168,9 @@ fi
 # --------------------------------------------------------------------------
 if grep -qE '^ADMIN_EMAIL=.+' "$APP_DIR/.env" && grep -qE '^ADMIN_PASSWORD=.+' "$APP_DIR/.env"; then
   echo "==> Recreando el superadministrador desde el .env..."
-  docker compose run --rm --no-deps --entrypoint sh "$APP_SERVICE" -lc 'node prisma/seed.cjs'
+  # SEED_DEMO se fuerza a false: "en limpio" no puede significar "con un analisis
+  # de demostracion adentro", por mas que el .env lo tenga activado para pruebas.
+  docker compose run --rm --no-deps --entrypoint sh -e SEED_DEMO=false "$APP_SERVICE" -lc 'node prisma/seed.cjs'
   echo "    ✓ Superadministrador listo."
 else
   echo "==> ADMIN_EMAIL o ADMIN_PASSWORD no están definidos en el .env."
