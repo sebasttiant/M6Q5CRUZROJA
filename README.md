@@ -57,6 +57,22 @@ docker build --target runner -t m6q5-cruzroja:local .
 
 ## Modelo de valoración
 
+## Orden institucional de las 6M
+
+Las seis categorías se numeran `M1` a `M6` y ese orden es único en todo el producto: formulario, detalle, gráfica del dashboard, columnas del Excel, tabla del PDF y desempate entre dos categorías con la misma valoración.
+
+| | | | |
+|---|---|---|---|
+| **M1** | Mano de obra | **M4** | Materiales |
+| **M2** | Método | **M5** | Medio ambiente |
+| **M3** | Maquinaria/equipos | **M6** | Medición |
+
+En pantallas anchas el formulario coloca M1–M3 en la columna izquierda y M4–M6 en la derecha, de modo que cada par queda enfrentado. Por debajo de 1280 px las seis tarjetas se apilan en una sola columna.
+
+Este orden reemplaza al del Excel fuente (`AC-43`, que lista Medición en segundo lugar). El cambio solo afecta la presentación y el desempate; la fórmula, las valoraciones y los datos almacenados son los mismos.
+
+Cada categoría lleva una ayuda con las variables que suelen considerarse en ella. Está plegada por omisión detrás de «¿Qué va aquí?»: seis bloques de guía siempre visibles convierten la sección en un muro de texto y empujan los campos fuera de la pantalla.
+
 Cada categoría 6M admite máximo tres subcausas, igual que las tres filas que el formato reserva por bloque (`AC-43!A30:A47`).
 
 La valoración multiplica únicamente los impactos diligenciados (1 bajo, 2 medio, 3 alto) y vale 0 cuando no hay ninguno. Reproduce exactamente `AC-43!G30`:

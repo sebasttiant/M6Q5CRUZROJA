@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, Plus, Save, Trash2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, HelpCircle, Plus, Save, Trash2 } from "lucide-react";
 import { createAnalysis, createPublicAnalysis } from "./actions";
 import { ANALYSIS_STATUS, CATEGORIES, MAX_SUBCAUSES_PER_CATEGORY, WHY_FIELDS, type CategoryKey, type WhyField } from "./constants";
 import { analysisSchema } from "./schema";
@@ -36,6 +36,8 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [savedCode, setSavedCode] = useState<string | null>(null);
+  // Guidance stays collapsed so the six blocks read at a glance; it is one click away per card.
+  const [openHints, setOpenHints] = useState<Partial<Record<CategoryKey, boolean>>>({});
 
   /** Section 03 is derived from section 02: the two highest valuations of the 6M block. */
   const candidates = useMemo(() => rankMainCauseCandidates(values.categories), [values.categories]);
@@ -54,6 +56,10 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
 
   function setField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function toggleHint(category: CategoryKey) {
+    setOpenHints((current) => ({ ...current, [category]: !current[category] }));
   }
 
   function updateDraft(category: CategoryKey, patch: Partial<CauseDraft>) {
@@ -148,13 +154,20 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
 
       <section className="panel">
         <div className="section-heading"><span>02</span><div><h2>Identificación de causas — 6M</h2><p>Máximo {MAX_SUBCAUSES_PER_CATEGORY} subcausas por categoría. La valoración multiplica los impactos diligenciados; sin impactos es 0.</p></div></div>
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="six-m-grid">
           {values.categories.map((category, categoryIndex) => {
             const metadata = CATEGORIES.find(({ key }) => key === category.category);
             const valuation = calculateValuation(category.subcauses.map(({ impact }) => impact));
             const full = category.subcauses.length >= MAX_SUBCAUSES_PER_CATEGORY;
             return <article className="category-card" key={category.category}>
-              <div className="flex items-center justify-between gap-3"><h3>{metadata?.label}</h3><span className="valuation">Valoración: {valuation}</span></div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2"><span className="m-badge">{metadata?.m}</span>{metadata?.label}</h3>
+                  <button type="button" className="hint-toggle mt-1.5" onClick={() => toggleHint(category.category)} aria-expanded={Boolean(openHints[category.category])} aria-controls={`hint-${category.category}`}><HelpCircle size={13} />{openHints[category.category] ? "Ocultar ayuda" : "¿Qué va aquí?"}</button>
+                </div>
+                <span className="valuation">Valoración: {valuation}</span>
+              </div>
+              {openHints[category.category] ? <p className="hint-text" id={`hint-${category.category}`}>{metadata?.hint}</p> : null}
               <div className="mt-4 space-y-3">
                 {category.subcauses.map((subcause, subcauseIndex) => <div className="grid grid-cols-[1fr_92px_auto] items-end gap-2" key={`${category.category}-${subcauseIndex}`}>
                   <label className="field text-xs">Subcausa {subcauseIndex + 1}<input value={subcause.description} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { description: event.target.value })} placeholder="Descripción" /></label>

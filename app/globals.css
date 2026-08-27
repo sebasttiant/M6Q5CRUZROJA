@@ -52,6 +52,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .nav-link { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; border-radius: .65rem; padding: .55rem .78rem; color: #555551; font-size: .82rem; font-weight: 750; text-decoration: none; }
 .nav-link:hover { background: var(--color-brand-soft); color: var(--color-brand); }
 
+/* M1..M3 fill the left column and M4..M6 the right one, so each pair sits across from the other. */
+.six-m-grid { display: grid; gap: 1.25rem; }
+@media (min-width: 1280px) {
+  .six-m-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); grid-auto-flow: column; align-items: start; }
+}
+
+.m-badge { display: inline-grid; min-width: 1.9rem; place-items: center; border-radius: .45rem; background: var(--color-ink); padding: .18rem .35rem; color: white; font-size: .66rem; font-weight: 900; letter-spacing: .04em; }
+.hint-toggle { display: inline-flex; align-items: center; gap: .3rem; border: 0; background: transparent; padding: 0; color: var(--color-muted); font-size: .73rem; font-weight: 750; cursor: pointer; }
+.hint-toggle:hover { color: var(--color-brand); }
+.hint-text { margin: .55rem 0 0; border-left: 3px solid var(--color-border); padding: .1rem 0 .1rem .65rem; color: var(--color-muted); font-size: .76rem; font-weight: 500; line-height: 1.5; }
+
 .category-card, .cause-card { border: 1px solid var(--color-border); border-radius: 1rem; background: #fbfaf9; padding: 1rem; }
 .category-card h3, .cause-card h3 { margin: 0; color: var(--color-ink); font-size: .9rem; font-weight: 850; }
 .valuation { border-radius: 999px; background: var(--color-brand-soft); padding: .35rem .6rem; color: var(--color-brand); font-size: .72rem; font-weight: 900; white-space: nowrap; }

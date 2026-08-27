@@ -72,9 +72,10 @@ describe("rankMainCauseCandidates", () => {
     expect(rankMainCauseCandidates(onlyOneScored).map((item) => item.category)).toEqual(["METODO"]);
   });
 
-  it("breaks ties using the canonical 6M order of the format", () => {
+  it("breaks ties using the institutional M1..M6 order", () => {
     const tied = CATEGORIES.map(({ key }) => ({ category: key, subcauses: [subcause(`Subcausa ${key}`, 3)] }));
-    expect(rankMainCauseCandidates(tied).map((item) => item.category)).toEqual(["MANO_DE_OBRA", "MEDICION"]);
+    // M1 Mano de obra and M2 Método win over the four categories that follow them.
+    expect(rankMainCauseCandidates(tied).map((item) => item.category)).toEqual(["MANO_DE_OBRA", "METODO"]);
   });
 
   it("returns nothing while no impact has been assessed", () => {
