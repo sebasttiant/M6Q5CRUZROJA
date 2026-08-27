@@ -24,7 +24,7 @@ services:
       RUN_SEED_ON_START: ${RUN_SEED_ON_START:-false}
       SEED_DEMO: ${SEED_DEMO:-false}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3536}:3000"
     depends_on:
       db:
         condition: service_healthy
