@@ -93,7 +93,12 @@ tbody tr:hover { background: #fffafa; }
 .trend-column i { display: block; width: min(100%, 2rem); border-radius: .45rem .45rem 0 0; background: var(--color-brand); }
 .trend-column span { font-weight: 850; color: var(--color-ink); }.trend-column small { white-space: nowrap; }
 .error, .text-danger { color: var(--color-danger); }
+.success-message { margin-top: .5rem; color: var(--color-success); font-size: .8rem; font-weight: 750; }
 .error-banner { display: flex; align-items: center; gap: .6rem; border: 1px solid #ffc9c5; border-radius: .8rem; background: #fff1f0; padding: .85rem 1rem; color: var(--color-danger); font-size: .85rem; font-weight: 750; }
+.access-card { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .15rem .8rem; border: 1px solid var(--color-border); border-radius: 1rem; background: white; padding: 1rem; }
+.access-card svg { grid-row: 1 / 3; color: var(--color-brand); }.access-card strong { font-size: 1.35rem; }.access-card span { color: var(--color-muted); font-size: .75rem; }
+.role-badge, .active-badge, .inactive-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .32rem .55rem; font-size: .68rem; font-weight: 850; }
+.role-badge { background: #e8f0ff; color: #2859a8; }.active-badge { background: #e2f6eb; color: #106c40; }.inactive-badge { background: #efefed; color: #555551; }
 
 @media (min-width: 768px) { .login-card { padding: 2.5rem; }.panel { padding: 1.5rem; }.kpi-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } }
 @media (max-width: 640px) { .filter-bar > * { width: 100%; }.filter-bar select, .filter-bar input { min-width: 0; } th, td { padding: .75rem; } }

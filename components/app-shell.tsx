@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BarChart3, ClipboardList, LogOut, Plus } from "lucide-react";
+import type { UserRole } from "@prisma/client";
+import { BarChart3, ClipboardList, LogOut, Plus, Users } from "lucide-react";
 import { logout } from "@/features/auth/actions";
 
 const NAVIGATION = [
@@ -10,7 +11,7 @@ const NAVIGATION = [
   { href: "/analisis/nuevo", label: "Nuevo análisis", icon: Plus },
 ] as const;
 
-export function AppShell({ children, email }: { children: ReactNode; email: string }) {
+export function AppShell({ children, email, role }: { children: ReactNode; email: string; role: UserRole }) {
   return (
     <div className="min-h-screen bg-canvas">
       <header className="sticky top-0 z-20 border-b border-border bg-white/95 backdrop-blur">
@@ -26,6 +27,7 @@ export function AppShell({ children, email }: { children: ReactNode; email: stri
         </div>
         <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-3 sm:px-6">
           {NAVIGATION.map(({ href, label, icon: Icon }) => <Link className="nav-link" href={href} key={href}><Icon size={17} />{label}</Link>)}
+          {role === "SUPERADMIN" ? <Link className="nav-link" href="/usuarios"><Users size={17} />Usuarios</Link> : null}
         </nav>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">{children}</main>

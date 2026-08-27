@@ -3,10 +3,12 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
+import { analysisScope } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/db/prisma";
 import { formatAnalysisCode } from "./code";
 import { analysisSchema, type AnalysisInput } from "./schema";
 import { calculateValuation } from "./valuation";
+import { z } from "zod";
 
 export interface AnalysisActionResult {
   ok: boolean;
@@ -16,7 +18,7 @@ export interface AnalysisActionResult {
 }
 
 export async function createAnalysis(values: AnalysisInput): Promise<AnalysisActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = analysisSchema.safeParse(values);
   if (!parsed.success) {
     return { ok: false, error: "Revise los campos marcados.", fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
@@ -46,6 +48,7 @@ export async function createAnalysis(values: AnalysisInput): Promise<AnalysisAct
           finding: parsed.data.finding,
           status: parsed.data.status,
           rootCause: parsed.data.rootCause,
+          creatorId: user.id,
           categories: {
             create: parsed.data.categories.map((category) => ({
               category: category.category,
@@ -67,10 +70,10 @@ export async function createAnalysis(values: AnalysisInput): Promise<AnalysisAct
 }
 
 export async function updateAnalysisStatus(id: string, formData: FormData): Promise<void> {
-  await requireUser();
-  const status = analysisSchema.shape.status.safeParse(formData.get("status"));
-  if (!status.success) return;
-  await prisma.analysis.update({ where: { id }, data: { status: status.data } });
+  const user = await requireUser();
+  const input = z.object({ id: z.string().cuid(), status: analysisSchema.shape.status }).safeParse({ id, status: formData.get("status") });
+  if (!input.success) return;
+  await prisma.analysis.updateMany({ where: { id: input.data.id, ...analysisScope(user) }, data: { status: input.data.status } });
   revalidatePath(`/analisis/${id}`);
   revalidatePath("/dashboard");
 }

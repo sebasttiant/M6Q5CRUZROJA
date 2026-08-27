@@ -9,3 +9,4 @@
 *.log
 .DS_Store
 /prisma/seed.cjs
+/.atl

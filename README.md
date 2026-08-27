@@ -9,6 +9,8 @@ MVP institucional para **Cruz Roja Colombiana Seccional Antioquia**. Digitaliza 
 - Dashboard con KPIs, estados, valoración 6M, impacto, tendencia, filtros y registros recientes.
 - Listado, búsqueda, consulta de detalle, actualización de estado y exportación Excel.
 - Autenticación con contraseña scrypt y cookie HTTP-only firmada con expiración verificable de 12 horas.
+- Gestión de usuarios con roles `SUPERADMIN`, `ADMIN` y `USER`, desactivación inmediata y contraseñas de mínimo 12 caracteres.
+- Alcance por creador para `USER`; `ADMIN` y `SUPERADMIN` conservan la visión institucional completa.
 - Validación Zod en cliente y servidor.
 
 ## Requisitos
@@ -24,9 +26,11 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Para crear el primer usuario, defina `ADMIN_EMAIL`, `ADMIN_PASSWORD` (mínimo 12 caracteres) y `RUN_SEED_ON_START=true`. Después del primer arranque puede retirar la contraseña del `.env` y volver a `RUN_SEED_ON_START=false`. `SEED_DEMO=true` agrega un análisis demostrativo idempotente.
+Para crear o actualizar el superadministrador, defina `ADMIN_EMAIL`, `ADMIN_PASSWORD` (mínimo 12 caracteres) y `RUN_SEED_ON_START=true`. El seed es idempotente, mantiene un único `SUPERADMIN` y actualiza su acceso desde variables locales. Después del arranque retire la contraseña del `.env` y vuelva a `RUN_SEED_ON_START=false`. `SEED_DEMO=true` agrega un análisis demostrativo idempotente.
 
-Aplicación: <http://localhost:3000> · Salud: <http://localhost:3000/api/health>
+El puerto público se configura con `APP_PORT` (por defecto `3536`); el contenedor mantiene el puerto interno `3000`.
+
+Aplicación: <http://localhost:3536> · Salud: <http://localhost:3536/api/health>
 
 ## Desarrollo local
 
@@ -58,6 +62,7 @@ Para cada categoría 6M se multiplican únicamente los impactos diligenciados (1
 
 - El repositorio no contiene contraseñas ni secretos reales; `.env` está ignorado.
 - Las migraciones se ejecutan explícitamente antes de iniciar el contenedor.
-- El seed es opcional e idempotente. No actualiza contraseñas existentes.
-- La exportación Excel requiere sesión activa e incluye el análisis completo: 6M, subcausas, impactos, valoraciones, causas principales, cinco porqués y causa raíz.
+- El seed es opcional e idempotente; las credenciales del superadministrador se leen únicamente del entorno local.
+- Solo `SUPERADMIN` administra usuarios. `ADMIN` opera todos los análisis y `USER` consulta y exporta únicamente los propios.
+- La exportación Excel requiere una sesión activa y aplica el mismo alcance de autorización que dashboard, listado y detalle.
 - La prueba concurrente del consecutivo queda como integración pendiente: requiere una instancia PostgreSQL aislada para coordinar transacciones reales sin volver frágil la suite unitaria.

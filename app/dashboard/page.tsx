@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { CATEGORIES, STATUS_LABELS } from "@/features/analysis/constants";
 import { buildMonthlyTrend, summarizeDashboard } from "@/features/analysis/dashboard";
 import { requireUser } from "@/lib/auth/session";
+import { analysisScope } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/db/prisma";
 
 interface DashboardFilters { status?: string; process?: string; from?: string; to?: string }
@@ -15,6 +16,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const filters = await searchParams;
   const validStatus = filters.status && Object.hasOwn(STATUS_LABELS, filters.status) ? filters.status as AnalysisStatus : undefined;
   const where: Prisma.AnalysisWhereInput = {
+    ...analysisScope(user),
     ...(validStatus ? { status: validStatus } : {}),
     ...(filters.process ? { process: filters.process } : {}),
     ...((filters.from || filters.to) ? { eventDate: { ...(filters.from ? { gte: new Date(`${filters.from}T00:00:00.000Z`) } : {}), ...(filters.to ? { lte: new Date(`${filters.to}T23:59:59.999Z`) } : {}) } } : {}),
@@ -26,7 +28,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     prisma.categoryAssessment.groupBy({ by: ["category"], where: { analysis: where }, _avg: { valuation: true }, _count: { _all: true } }),
     prisma.subcause.groupBy({ by: ["impact"], where: { assessment: { analysis: where } }, _count: { _all: true } }),
     prisma.analysis.groupBy({ by: ["process"], where, _count: { _all: true }, orderBy: { _count: { process: "desc" } }, take: 6 }),
-    prisma.analysis.findMany({ distinct: ["process"], select: { process: true }, orderBy: { process: "asc" } }),
+    prisma.analysis.findMany({ where: analysisScope(user), distinct: ["process"], select: { process: true }, orderBy: { process: "asc" } }),
     prisma.categoryAssessment.aggregate({ where: { analysis: where }, _max: { valuation: true } }),
     prisma.analysis.groupBy({ by: ["eventDate"], where, _count: { _all: true }, orderBy: { eventDate: "asc" } }),
   ]);
@@ -39,7 +41,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const trendEntries = buildMonthlyTrend(trendGroups);
   const maxTrend = Math.max(1, ...trendEntries.map(({ count }) => count));
 
-  return <AppShell email={user.email}>
+  return <AppShell email={user.email} role={user.role}>
     <PageHeader eyebrow="Visión institucional" title="Dashboard de calidad" description="Seguimiento de análisis, criticidad y evolución operativa." action={<Link href="/analisis/nuevo" className="button button-primary"><Plus size={18} />Nuevo análisis</Link>} />
     <form className="filter-bar mb-6"><select name="status" defaultValue={filters.status ?? "TODOS"}><option value="TODOS">Todos los estados</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><select name="process" defaultValue={filters.process ?? ""}><option value="">Todos los procesos</option>{processOptions.map(({ process }) => <option key={process} value={process}>{process}</option>)}</select><input aria-label="Fecha inicial" name="from" type="date" defaultValue={filters.from} /><input aria-label="Fecha final" name="to" type="date" defaultValue={filters.to} /><button className="button button-secondary">Aplicar filtros</button></form>
     <section className="kpi-grid"><Kpi icon={<ClipboardList />} label="Análisis" value={total} detail="en el periodo filtrado" /><Kpi icon={<Activity />} label="Abiertos" value={open} detail="requieren seguimiento" /><Kpi icon={<CheckCircle2 />} label="Cerrados" value={closed} detail={`${total ? Math.round((closed / total) * 100) : 0}% de cierre`} /><Kpi icon={<TrendingUp />} label="Valoración máxima" value={maxValuation} detail="producto de impactos 6M" /></section>

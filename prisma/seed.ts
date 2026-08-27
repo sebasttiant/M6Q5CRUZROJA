@@ -8,12 +8,26 @@ async function seedAdmin() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   if (!email || !password) {
-    console.log("[seed] ADMIN_EMAIL/ADMIN_PASSWORD no definidos; no se crea usuario.");
+    console.log("[seed] Credenciales de superadministración no definidas; no se actualiza el acceso.");
     return;
   }
   if (password.length < 12) throw new Error("ADMIN_PASSWORD debe tener al menos 12 caracteres.");
-  const existing = await prisma.adminUser.findUnique({ where: { email } });
-  if (!existing) await prisma.adminUser.create({ data: { email, passwordHash: await hashPassword(password) } });
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction(async (tx) => {
+    const [existingSuperadmin, emailOwner] = await Promise.all([
+      tx.adminUser.findFirst({ where: { role: "SUPERADMIN" }, orderBy: { createdAt: "asc" } }),
+      tx.adminUser.findUnique({ where: { email } }),
+    ]);
+    if (existingSuperadmin && emailOwner && existingSuperadmin.id !== emailOwner.id) {
+      throw new Error("El correo de superadministración ya pertenece a otro usuario.");
+    }
+    const target = existingSuperadmin
+      ? await tx.adminUser.update({ where: { id: existingSuperadmin.id }, data: { email, passwordHash, active: true, role: "SUPERADMIN", sessionVersion: { increment: 1 } } })
+      : emailOwner
+        ? await tx.adminUser.update({ where: { id: emailOwner.id }, data: { passwordHash, active: true, role: "SUPERADMIN", sessionVersion: { increment: 1 } } })
+        : await tx.adminUser.create({ data: { email, passwordHash, active: true, role: "SUPERADMIN" } });
+    await tx.adminUser.updateMany({ where: { role: "SUPERADMIN", id: { not: target.id } }, data: { role: "ADMIN" } });
+  });
 }
 
 async function seedDemo() {
