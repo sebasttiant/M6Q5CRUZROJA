@@ -145,8 +145,8 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
           <label className="field">Nombre *<input value={values.firstName} onChange={(event) => setField("firstName", event.target.value)} required /></label>
           <label className="field">Apellido *<input value={values.lastName} onChange={(event) => setField("lastName", event.target.value)} required /></label>
           <label className="field">Correo *<input type="email" value={values.email} onChange={(event) => setField("email", event.target.value)} required /></label>
-          <label className="field">Proceso *<input value={values.process} onChange={(event) => setField("process", event.target.value)} placeholder="Ej. Gestión del riesgo" required /></label>
-          <label className="field">Fecha *<input type="date" value={values.eventDate} onChange={(event) => setField("eventDate", event.target.value)} required /></label>
+          <label className="field">Proceso/Área a la que perteneces *<input value={values.process} onChange={(event) => setField("process", event.target.value)} placeholder="Ej. Gestión del riesgo" required /></label>
+          <label className="field">Fecha del reporte 6MQ5 *<input type="date" value={values.eventDate} onChange={(event) => setField("eventDate", event.target.value)} required /></label>
           {mode === "public" ? null : <label className="field">Estado<select value={values.status} onChange={(event) => setField("status", event.target.value as FormState["status"])}><option value="BORRADOR">Borrador</option><option value="EN_ANALISIS">En análisis</option><option value="PENDIENTE_PLAN">Pendiente de plan</option><option value="CERRADO">Cerrado</option></select></label>}
         </div>
         <label className="field mt-4">Hallazgo *<textarea rows={4} value={values.finding} onChange={(event) => setField("finding", event.target.value)} placeholder="Describa claramente la situación, evidencia y alcance del hallazgo." required /></label>

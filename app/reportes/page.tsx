@@ -15,9 +15,9 @@ export default function PublicReportPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <header className="border-b border-border bg-white">
-        <div className="shell flex flex-col items-center gap-4 py-6 text-center sm:flex-row sm:justify-between sm:gap-6 sm:text-left">
-          <Image src="/logo-6mq5.png" width={520} height={285} sizes="180px" className="h-auto w-[180px]" alt="6MQ5 — Análisis de Causas" priority />
-          <p className="text-sm font-bold text-brand sm:text-base">Cruz Roja Colombiana Seccional Antioquia</p>
+        <div className="shell flex flex-col items-center justify-between gap-4 py-5 sm:flex-row sm:gap-6">
+          <Image src="/logo-cruz-roja.svg" width={176} height={86} className="h-auto w-[150px]" alt="Cruz Roja Colombiana Seccional Antioquia" priority />
+          <Image src="/logo-6mq5.png" width={520} height={285} sizes="180px" className="h-auto w-[170px]" alt="6MQ5 — Análisis de Causas" priority />
         </div>
       </header>
 
