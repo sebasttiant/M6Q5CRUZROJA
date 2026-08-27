@@ -1,0 +1,14 @@
+CREATE TYPE "AnalysisStatus" AS ENUM ('BORRADOR', 'EN_ANALISIS', 'PENDIENTE_PLAN', 'CERRADO');
+CREATE TYPE "CategoryType" AS ENUM ('MANO_DE_OBRA', 'MEDICION', 'METODO', 'MATERIALES', 'MAQUINARIA_EQUIPOS', 'MEDIO_AMBIENTE');
+CREATE TABLE "AdminUser" ("id" TEXT PRIMARY KEY, "email" TEXT NOT NULL UNIQUE, "passwordHash" TEXT NOT NULL, "active" BOOLEAN NOT NULL DEFAULT true, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "AnnualSequence" ("year" INTEGER PRIMARY KEY, "lastValue" INTEGER NOT NULL DEFAULT 0, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Analysis" ("id" TEXT PRIMARY KEY, "code" TEXT NOT NULL UNIQUE, "firstName" TEXT NOT NULL, "lastName" TEXT NOT NULL, "email" TEXT NOT NULL, "process" TEXT NOT NULL, "eventDate" TIMESTAMP(3) NOT NULL, "finding" TEXT NOT NULL, "status" "AnalysisStatus" NOT NULL DEFAULT 'EN_ANALISIS', "rootCause" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "CategoryAssessment" ("id" TEXT PRIMARY KEY, "analysisId" TEXT NOT NULL, "category" "CategoryType" NOT NULL, "valuation" INTEGER NOT NULL, CONSTRAINT "CategoryAssessment_analysisId_fkey" FOREIGN KEY ("analysisId") REFERENCES "Analysis"("id") ON DELETE CASCADE);
+CREATE TABLE "Subcause" ("id" TEXT PRIMARY KEY, "assessmentId" TEXT NOT NULL, "description" TEXT NOT NULL, "impact" INTEGER NOT NULL, CONSTRAINT "Subcause_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "CategoryAssessment"("id") ON DELETE CASCADE);
+CREATE TABLE "MainCause" ("id" TEXT PRIMARY KEY, "analysisId" TEXT NOT NULL, "position" INTEGER NOT NULL, "cause" TEXT NOT NULL, "subcause" TEXT NOT NULL, "why1" TEXT NOT NULL, "why2" TEXT NOT NULL, "why3" TEXT NOT NULL, "why4" TEXT NOT NULL, "why5" TEXT NOT NULL, CONSTRAINT "MainCause_analysisId_fkey" FOREIGN KEY ("analysisId") REFERENCES "Analysis"("id") ON DELETE CASCADE);
+CREATE UNIQUE INDEX "CategoryAssessment_analysisId_category_key" ON "CategoryAssessment"("analysisId", "category");
+CREATE UNIQUE INDEX "MainCause_analysisId_position_key" ON "MainCause"("analysisId", "position");
+CREATE INDEX "Analysis_status_idx" ON "Analysis"("status");
+CREATE INDEX "Analysis_process_idx" ON "Analysis"("process");
+CREATE INDEX "Analysis_eventDate_idx" ON "Analysis"("eventDate");
+CREATE INDEX "CategoryAssessment_category_idx" ON "CategoryAssessment"("category");

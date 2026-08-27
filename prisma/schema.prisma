@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AnalysisStatus {
+  BORRADOR
+  EN_ANALISIS
+  PENDIENTE_PLAN
+  CERRADO
+}
+
+enum CategoryType {
+  MANO_DE_OBRA
+  MEDICION
+  METODO
+  MATERIALES
+  MAQUINARIA_EQUIPOS
+  MEDIO_AMBIENTE
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AnnualSequence {
+  year      Int      @id
+  lastValue Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Analysis {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  firstName   String
+  lastName    String
+  email       String
+  process     String
+  eventDate   DateTime
+  finding     String
+  status      AnalysisStatus    @default(EN_ANALISIS)
+  rootCause   String
+  categories  CategoryAssessment[]
+  mainCauses  MainCause[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([status])
+  @@index([process])
+  @@index([eventDate])
+}
+
+model CategoryAssessment {
+  id        String       @id @default(cuid())
+  analysisId String
+  analysis  Analysis     @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  category  CategoryType
+  valuation Int
+  subcauses Subcause[]
+
+  @@unique([analysisId, category])
+  @@index([category])
+}
+
+model Subcause {
+  id           String             @id @default(cuid())
+  assessmentId String
+  assessment   CategoryAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  description  String
+  impact       Int
+}
+
+model MainCause {
+  id         String   @id @default(cuid())
+  analysisId String
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  position   Int
+  cause      String
+  subcause   String
+  why1       String
+  why2       String
+  why3       String
+  why4       String
+  why5       String
+
+  @@unique([analysisId, position])
+}

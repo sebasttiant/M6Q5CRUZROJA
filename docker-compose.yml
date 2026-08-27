@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cruzroja}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:-m6q5}
+    volumes:
+      - m6q5-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cruzroja} -d ${POSTGRES_DB:-m6q5}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cruzroja}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en .env}@db:5432/${POSTGRES_DB:-m6q5}?schema=public
+      SESSION_SECRET: ${SESSION_SECRET:?Defina SESSION_SECRET en .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      RUN_SEED_ON_START: ${RUN_SEED_ON_START:-false}
+      SEED_DEMO: ${SEED_DEMO:-false}
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  m6q5-postgres-data:
