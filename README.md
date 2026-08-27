@@ -59,11 +59,93 @@ docker build --target runner -t m6q5-cruzroja:local .
 
 ## Despliegue en el VPS
 
+Primer despliegue:
+
 ```bash
 cd /opt/docker/m6q5cruzroja
-cp .env.example .env      # solo la primera vez; completá los valores reales
+./init-env.sh     # genera las claves; solo pregunta la contraseña de acceso
+./deploy.sh
+./init-env.sh --asegurar   # una vez que confirmes que podés entrar
+```
+
+Despliegues siguientes:
+
+```bash
 ./deploy.sh
 ```
+
+### init-env.sh
+
+Genera el `.env` con `POSTGRES_PASSWORD` (48 hexadecimales) y `SESSION_SECRET` (64 caracteres) aleatorios. Lo único que se escribe a mano es la contraseña del superadministrador, que se pide dos veces y se valida: mínimo 12 caracteres, sin `# M6Q5 · Análisis de causa raíz
+
+MVP institucional para **Cruz Roja Colombiana Seccional Antioquia**. Digitaliza el análisis de causas con metodología 6M, valoración por impacto y los porqués del programa 6MQ5.
+
+## Funcionalidades
+
+- Código anual concurrente `M6Q5-0001-2026` mediante secuencia atómica en PostgreSQL.
+- Registro completo: responsable, proceso, fecha, hallazgo, seis categorías con máximo tres subcausas cada una, dos causas principales, sus porqués y causa raíz.
+- Exportación institucional a Excel (consolidado) y a PDF (un análisis por documento, listo para firmar).
+- Dashboard con KPIs, estados, valoración 6M, impacto, tendencia, filtros y registros recientes.
+- Listado, búsqueda, consulta de detalle, actualización de estado y exportación Excel.
+- Autenticación con contraseña scrypt y cookie HTTP-only firmada con expiración verificable de 12 horas.
+- Gestión de usuarios con roles `SUPERADMIN`, `ADMIN` y `USER`, desactivación inmediata y contraseñas de mínimo 12 caracteres.
+- Alcance por creador para `USER`; `ADMIN` y `SUPERADMIN` conservan la visión institucional completa.
+- Validación Zod en cliente y servidor.
+
+## Requisitos
+
+- Node.js 24 y pnpm 11.7, o Docker con Compose.
+- PostgreSQL 18 (versiones recientes compatibles también deberían funcionar).
+
+## Inicio con Docker
+
+```bash
+cp .env.example .env
+# Reemplace TODOS los valores de ejemplo. Use secretos largos y únicos.
+docker compose up --build
+```
+
+Para crear o actualizar el superadministrador, defina `ADMIN_EMAIL`, `ADMIN_PASSWORD` (mínimo 12 caracteres) y `RUN_SEED_ON_START=true`. El seed es idempotente, mantiene un único `SUPERADMIN` y actualiza su acceso desde variables locales. Después del arranque retire la contraseña del `.env` y vuelva a `RUN_SEED_ON_START=false`. `SEED_DEMO=true` agrega un análisis demostrativo idempotente.
+
+El puerto público se configura con `APP_PORT` (por defecto `3536`); el contenedor mantiene el puerto interno `3000`.
+
+Aplicación: <http://localhost:3536> · Salud: <http://localhost:3536/api/health>
+
+## Desarrollo local
+
+```bash
+cp .env.example .env
+pnpm install
+pnpm prisma:generate
+pnpm prisma:migrate
+pnpm prisma:seed
+pnpm dev
+```
+
+## Verificación
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+docker compose config
+docker build --target runner -t m6q5-cruzroja:local .
+```
+
+## Modelo de valoración
+
+## Despliegue en el VPS
+
+ (docker compose lo interpolaría) ni `#` (el `.env` lo leería como comentario).
+
+`POSTGRES_PASSWORD` se genera en hexadecimal a propósito: termina embebida en la URL de conexión, y un `/`, `+` o `=` de base64 la partiría.
+
+No escribe `DATABASE_URL`: dentro de Docker la arma `docker-compose.yml` apuntando al servicio `db`.
+
+**Se niega a sobrescribir un `.env` existente.** Regenerar `POSTGRES_PASSWORD` contra un volumen de Postgres que ya existe deja la aplicación sin poder conectar y los análisis inaccesibles. `--forzar` lo permite igual, respaldando el anterior; solo tiene sentido en una instalación nueva o junto a `./reset-datos.sh --todo`.
+
+`--asegurar` es el paso de cierre: pone `RUN_SEED_ON_START=false` y borra `ADMIN_PASSWORD` del archivo. La contraseña sigue vigente como hash scrypt en la base.
 
 `deploy.sh` corre: respaldo del código → `git pull` → validación del `.env` → build → base arriba → **dump de la base verificado** → migraciones → app arriba → espera a `healthy` → verificaciones post-deploy.
 

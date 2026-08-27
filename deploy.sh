@@ -41,8 +41,8 @@ docker compose version >/dev/null 2>&1 || { echo "ERROR: se requiere 'docker com
 
 if [ ! -f "$APP_DIR/.env" ]; then
   echo "ERROR: falta $APP_DIR/.env"
-  echo "       Copialo de .env.example y completá los valores reales:"
-  echo "         cp .env.example .env && nano .env"
+  echo "       Generalo con claves seguras (solo pregunta la contraseña de acceso):"
+  echo "         ./init-env.sh"
   exit 1
 fi
 
