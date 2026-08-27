@@ -169,8 +169,8 @@ export function AnalysisForm({ mode = "internal" }: { mode?: "internal" | "publi
               </div>
               {openHints[category.category] ? <p className="hint-text" id={`hint-${category.category}`}>{metadata?.hint}</p> : null}
               <div className="mt-4 space-y-3">
-                {category.subcauses.map((subcause, subcauseIndex) => <div className="grid grid-cols-[1fr_92px_auto] items-end gap-2" key={`${category.category}-${subcauseIndex}`}>
-                  <label className="field text-xs">Subcausa {subcauseIndex + 1}<input value={subcause.description} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { description: event.target.value })} placeholder="Descripción" /></label>
+                {category.subcauses.map((subcause, subcauseIndex) => <div className="subcause-row" key={`${category.category}-${subcauseIndex}`}>
+                  <label className="field subcause-description text-xs">Subcausa {subcauseIndex + 1}<input value={subcause.description} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { description: event.target.value })} placeholder="Descripción" /></label>
                   <label className="field text-xs">Impacto<select value={subcause.impact ?? ""} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { impact: event.target.value ? Number(event.target.value) : null })}><option value="">—</option><option value="1">1 Bajo</option><option value="2">2 Medio</option><option value="3">3 Alto</option></select></label>
                   <button type="button" className="icon-button mb-0.5" onClick={() => removeSubcause(categoryIndex, subcauseIndex)} disabled={category.subcauses.length === 1} title="Eliminar subcausa"><Trash2 size={16} /></button>
                 </div>)}

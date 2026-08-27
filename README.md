@@ -57,6 +57,32 @@ docker build --target runner -t m6q5-cruzroja:local .
 
 ## Modelo de valoración
 
+## Despliegue en el VPS
+
+```bash
+cd /opt/docker/m6q5cruzroja
+cp .env.example .env      # solo la primera vez; completá los valores reales
+./deploy.sh
+```
+
+`deploy.sh` corre: respaldo del código → `git pull` → validación del `.env` → build → base arriba → **dump de la base verificado** → migraciones → app arriba → espera a `healthy` → verificaciones post-deploy.
+
+Se detiene antes de tocar la base si el `.env` conserva valores de ejemplo, si `SESSION_SECRET` mide menos de 32 caracteres, si hay cambios locales sin commitear o si el respaldo de la base falla o queda corrupto. Migrar sin punto de retorno no es una opción: la migración que retiró `why4`/`why5` no se revierte sola.
+
+Las verificaciones finales son informativas y nunca abortan un deploy ya saludable: comprueban tablas y columnas, que `why4`/`why5` sigan ausentes, que el trigger de tres subcausas esté activo, que exista un superadministrador y que `/api/health`, `/login`, `/reportes`, `/dashboard` y `/analisis` respondan sin 5xx.
+
+Variables útiles: `BRANCH`, `HEALTH_TIMEOUT`, `KEEP_BACKUPS`, `APP_DIR`. Los respaldos quedan en `backups/` (ignorado por git) y rotan solos.
+
+### Dejar el sistema en limpio
+
+```bash
+./reset-datos.sh          # vacía las tablas, conserva el esquema
+./reset-datos.sh --todo   # además destruye el volumen y migra desde cero
+./reset-datos.sh --help
+```
+
+Borra los análisis y los usuarios, reinicia el consecutivo anual a `M6Q5-0001-<año>` y recrea el superadministrador desde el `.env`. Respalda y verifica el dump antes de borrar, y exige escribir `BORRAR` en mayúsculas salvo que se pase `--si`.
+
 ## Orden institucional de las 6M
 
 Las seis categorías se numeran `M1` a `M6` y ese orden es único en todo el producto: formulario, detalle, gráfica del dashboard, columnas del Excel, tabla del PDF y desempate entre dos categorías con la misma valoración.
