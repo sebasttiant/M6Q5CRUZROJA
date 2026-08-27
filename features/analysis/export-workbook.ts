@@ -1,5 +1,7 @@
 import ExcelJS from "exceljs";
-import { CATEGORIES, STATUS_LABELS } from "./constants";
+import { CATEGORIES, STATUS_LABELS, WHY_FIELDS } from "./constants";
+
+const WHY_NUMBERS = WHY_FIELDS.map((_field, index) => index + 1);
 
 interface ExportSubcause {
   description: string;
@@ -19,8 +21,6 @@ interface ExportMainCause {
   why1: string;
   why2: string;
   why3: string;
-  why4: string;
-  why5: string;
 }
 
 export interface ExportAnalysis {
@@ -54,7 +54,7 @@ export function buildAnalysisWorkbook(analyses: ExportAnalysis[]): ExcelJS.Workb
     ...[1, 2].flatMap((position) => [
       { header: `Causa principal ${position}`, key: `cause${position}`, width: 40 },
       { header: `Subcausa asociada ${position}`, key: `associatedSubcause${position}`, width: 40 },
-      ...[1, 2, 3, 4, 5].map((why) => ({ header: `Por qué ${why} — causa ${position}`, key: `cause${position}Why${why}`, width: 42 })),
+      ...WHY_NUMBERS.map((why) => ({ header: `Por qué ${why} — causa ${position}`, key: `cause${position}Why${why}`, width: 42 })),
     ]),
     { header: "Causa raíz", key: "rootCause", width: 55 },
   ];
@@ -75,7 +75,7 @@ export function buildAnalysisWorkbook(analyses: ExportAnalysis[]): ExcelJS.Workb
     const causeValues = Object.fromEntries(analysis.mainCauses.flatMap((cause) => [
       [`cause${cause.position}`, cause.cause],
       [`associatedSubcause${cause.position}`, cause.subcause],
-      ...[cause.why1, cause.why2, cause.why3, cause.why4, cause.why5].map((why, index) => [`cause${cause.position}Why${index + 1}`, why]),
+      ...[cause.why1, cause.why2, cause.why3].map((why, index) => [`cause${cause.position}Why${index + 1}`, why]),
     ]));
     sheet.addRow({
       code: analysis.code, date: analysis.eventDate.toISOString().slice(0, 10), process: analysis.process,

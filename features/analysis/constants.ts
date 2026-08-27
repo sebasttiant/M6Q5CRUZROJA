@@ -22,3 +22,13 @@ export const CATEGORIES = [
 ] as const;
 
 export type CategoryKey = (typeof CATEGORIES)[number]["key"];
+
+/** The source spreadsheet reserves three impact cells per 6M category (F30, F31, F32). */
+export const MAX_SUBCAUSES_PER_CATEGORY = 3;
+
+/** Only the two highest scoring categories are carried into the why-analysis section. */
+export const MAX_MAIN_CAUSES = 2;
+
+export const WHY_FIELDS = ["why1", "why2", "why3"] as const;
+
+export type WhyField = (typeof WHY_FIELDS)[number];

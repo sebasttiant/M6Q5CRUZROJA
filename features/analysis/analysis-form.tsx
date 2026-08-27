@@ -1,29 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Plus, Save, Trash2 } from "lucide-react";
 import { createAnalysis } from "./actions";
-import { ANALYSIS_STATUS, CATEGORIES, type CategoryKey } from "./constants";
+import { ANALYSIS_STATUS, CATEGORIES, MAX_SUBCAUSES_PER_CATEGORY, WHY_FIELDS, type CategoryKey, type WhyField } from "./constants";
 import { analysisSchema } from "./schema";
-import { calculateValuation } from "./valuation";
+import { calculateValuation, rankMainCauseCandidates } from "./valuation";
 
 interface SubcauseForm { description: string; impact: number | null }
 interface CategoryForm { category: CategoryKey; subcauses: SubcauseForm[] }
-interface MainCauseForm { cause: string; subcause: string; why1: string; why2: string; why3: string; why4: string; why5: string }
+/** Whys are held per 6M category so re-ranking section 02 never moves an answer to another cause. */
+type CauseDraft = { subcause: string; touchedSubcause: boolean } & Record<WhyField, string>;
 interface FormState {
   firstName: string; lastName: string; email: string; process: string; eventDate: string; finding: string;
-  status: (typeof ANALYSIS_STATUS)[keyof typeof ANALYSIS_STATUS]; categories: CategoryForm[]; mainCauses: MainCauseForm[]; rootCause: string;
+  status: (typeof ANALYSIS_STATUS)[keyof typeof ANALYSIS_STATUS]; categories: CategoryForm[];
+  drafts: Partial<Record<CategoryKey, CauseDraft>>; rootCause: string;
 }
 
-const EMPTY_CAUSE: MainCauseForm = { cause: "", subcause: "", why1: "", why2: "", why3: "", why4: "", why5: "" };
+const EMPTY_DRAFT: CauseDraft = { subcause: "", touchedSubcause: false, why1: "", why2: "", why3: "" };
 
 function initialState(): FormState {
   return {
     firstName: "", lastName: "", email: "", process: "", eventDate: new Date().toISOString().slice(0, 10), finding: "",
     status: ANALYSIS_STATUS.EN_ANALISIS,
     categories: CATEGORIES.map(({ key }) => ({ category: key, subcauses: [{ description: "", impact: null }] })),
-    mainCauses: [{ ...EMPTY_CAUSE }], rootCause: "",
+    drafts: {}, rootCause: "",
   };
 }
 
@@ -33,8 +35,27 @@ export function AnalysisForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  /** Section 03 is derived from section 02: the two highest valuations of the 6M block. */
+  const candidates = useMemo(() => rankMainCauseCandidates(values.categories), [values.categories]);
+
+  const mainCauses = candidates.map((candidate) => {
+    const label = CATEGORIES.find(({ key }) => key === candidate.category)?.label ?? candidate.category;
+    const draft = values.drafts[candidate.category] ?? EMPTY_DRAFT;
+    return {
+      ...candidate,
+      label,
+      draft,
+      // Until the analyst edits it, the associated subcause follows the highest impact one.
+      subcause: draft.touchedSubcause ? draft.subcause : candidate.subcause,
+    };
+  });
+
   function setField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateDraft(category: CategoryKey, patch: Partial<CauseDraft>) {
+    setValues((current) => ({ ...current, drafts: { ...current.drafts, [category]: { ...(current.drafts[category] ?? EMPTY_DRAFT), ...patch } } }));
   }
 
   function updateSubcause(categoryIndex: number, subcauseIndex: number, patch: Partial<SubcauseForm>) {
@@ -42,15 +63,11 @@ export function AnalysisForm() {
   }
 
   function addSubcause(categoryIndex: number) {
-    setValues((current) => ({ ...current, categories: current.categories.map((category, index) => index === categoryIndex ? { ...category, subcauses: [...category.subcauses, { description: "", impact: null }] } : category) }));
+    setValues((current) => ({ ...current, categories: current.categories.map((category, index) => index === categoryIndex && category.subcauses.length < MAX_SUBCAUSES_PER_CATEGORY ? { ...category, subcauses: [...category.subcauses, { description: "", impact: null }] } : category) }));
   }
 
   function removeSubcause(categoryIndex: number, subcauseIndex: number) {
     setValues((current) => ({ ...current, categories: current.categories.map((category, index) => index === categoryIndex ? { ...category, subcauses: category.subcauses.filter((_, subIndex) => subIndex !== subcauseIndex) } : category) }));
-  }
-
-  function updateCause(index: number, field: keyof MainCauseForm, value: string) {
-    setValues((current) => ({ ...current, mainCauses: current.mainCauses.map((cause, causeIndex) => causeIndex === index ? { ...cause, [field]: value } : cause) }));
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -61,6 +78,10 @@ export function AnalysisForm() {
       categories: values.categories.map((category) => ({
         ...category,
         subcauses: category.subcauses.filter((subcause) => subcause.description.trim() || subcause.impact !== null),
+      })),
+      mainCauses: mainCauses.map((cause) => ({
+        cause: cause.label, subcause: cause.subcause,
+        why1: cause.draft.why1, why2: cause.draft.why2, why3: cause.draft.why3,
       })),
     };
     const clientValidation = analysisSchema.safeParse(normalized);
@@ -91,36 +112,43 @@ export function AnalysisForm() {
       </section>
 
       <section className="panel">
-        <div className="section-heading"><span>02</span><div><h2>Identificación de causas — 6M</h2><p>Registre subcausas e impacto. La valoración multiplica los impactos diligenciados; sin impactos es 0.</p></div></div>
+        <div className="section-heading"><span>02</span><div><h2>Identificación de causas — 6M</h2><p>Máximo {MAX_SUBCAUSES_PER_CATEGORY} subcausas por categoría. La valoración multiplica los impactos diligenciados; sin impactos es 0.</p></div></div>
         <div className="grid gap-5 xl:grid-cols-2">
           {values.categories.map((category, categoryIndex) => {
             const metadata = CATEGORIES.find(({ key }) => key === category.category);
             const valuation = calculateValuation(category.subcauses.map(({ impact }) => impact));
+            const full = category.subcauses.length >= MAX_SUBCAUSES_PER_CATEGORY;
             return <article className="category-card" key={category.category}>
               <div className="flex items-center justify-between gap-3"><h3>{metadata?.label}</h3><span className="valuation">Valoración: {valuation}</span></div>
               <div className="mt-4 space-y-3">
                 {category.subcauses.map((subcause, subcauseIndex) => <div className="grid grid-cols-[1fr_92px_auto] items-end gap-2" key={`${category.category}-${subcauseIndex}`}>
-                  <label className="field text-xs">Subcausa<input value={subcause.description} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { description: event.target.value })} placeholder="Descripción" /></label>
+                  <label className="field text-xs">Subcausa {subcauseIndex + 1}<input value={subcause.description} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { description: event.target.value })} placeholder="Descripción" /></label>
                   <label className="field text-xs">Impacto<select value={subcause.impact ?? ""} onChange={(event) => updateSubcause(categoryIndex, subcauseIndex, { impact: event.target.value ? Number(event.target.value) : null })}><option value="">—</option><option value="1">1 Bajo</option><option value="2">2 Medio</option><option value="3">3 Alto</option></select></label>
                   <button type="button" className="icon-button mb-0.5" onClick={() => removeSubcause(categoryIndex, subcauseIndex)} disabled={category.subcauses.length === 1} title="Eliminar subcausa"><Trash2 size={16} /></button>
                 </div>)}
               </div>
-              <button type="button" className="text-button mt-3" onClick={() => addSubcause(categoryIndex)}><Plus size={15} />Agregar subcausa</button>
+              {full
+                ? <p className="mt-3 text-xs text-muted">Máximo {MAX_SUBCAUSES_PER_CATEGORY} subcausas alcanzado.</p>
+                : <button type="button" className="text-button mt-3" onClick={() => addSubcause(categoryIndex)}><Plus size={15} />Agregar subcausa</button>}
             </article>;
           })}
         </div>
       </section>
 
       <section className="panel">
-        <div className="section-heading"><span>03</span><div><h2>Causas principales y cinco porqués</h2><p>Seleccione una o máximo dos causas y profundice hasta el quinto porqué.</p></div></div>
-        <div className="space-y-5">
-          {values.mainCauses.map((cause, index) => <article className="cause-card" key={index}>
-            <div className="mb-4 flex items-center justify-between"><h3>Causa principal {index + 1}</h3>{values.mainCauses.length > 1 ? <button type="button" className="text-button text-danger" onClick={() => setField("mainCauses", values.mainCauses.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={15} />Eliminar</button> : null}</div>
-            <div className="grid gap-4 md:grid-cols-2"><label className="field">Causa *<input value={cause.cause} onChange={(event) => updateCause(index, "cause", event.target.value)} /></label><label className="field">Subcausa asociada *<input value={cause.subcause} onChange={(event) => updateCause(index, "subcause", event.target.value)} /></label></div>
-            <div className="mt-4 grid gap-3 md:grid-cols-5">{(["why1", "why2", "why3", "why4", "why5"] as const).map((field, whyIndex) => <label className="field text-xs" key={field}>¿Por qué? {whyIndex + 1} *<textarea rows={4} value={cause[field]} onChange={(event) => updateCause(index, field, event.target.value)} /></label>)}</div>
-          </article>)}
-          {values.mainCauses.length < 2 ? <button className="button button-secondary" type="button" onClick={() => setField("mainCauses", [...values.mainCauses, { ...EMPTY_CAUSE }])}><Plus size={17} />Agregar segunda causa</button> : null}
-        </div>
+        <div className="section-heading"><span>03</span><div><h2>Causas principales y tres porqués</h2><p>Las causas se traen automáticamente: las dos categorías con mayor valoración en la sección 02.</p></div></div>
+        {mainCauses.length === 0
+          ? <p className="text-sm text-muted">Asigne impacto a por lo menos una subcausa en la sección 02 para que el sistema proponga las causas principales.</p>
+          : <div className="space-y-5">
+              {mainCauses.map((cause, index) => <article className="cause-card" key={cause.category}>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <h3>Causa principal {index + 1}: {cause.label}</h3>
+                  <span className="valuation">Valoración: {cause.valuation}</span>
+                </div>
+                <label className="field">Subcausa asociada *<input value={cause.subcause} onChange={(event) => updateDraft(cause.category, { subcause: event.target.value, touchedSubcause: true })} placeholder="Subcausa de mayor impacto de esta categoría" /></label>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">{WHY_FIELDS.map((field, whyIndex) => <label className="field text-xs" key={field}>¿Por qué? {whyIndex + 1} *<textarea rows={4} value={cause.draft[field]} onChange={(event) => updateDraft(cause.category, { [field]: event.target.value })} /></label>)}</div>
+              </article>)}
+            </div>}
       </section>
 
       <section className="panel border-l-4 border-l-brand">

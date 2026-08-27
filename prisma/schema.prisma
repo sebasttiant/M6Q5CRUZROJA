@@ -100,8 +100,6 @@ model MainCause {
   why1       String
   why2       String
   why3       String
-  why4       String
-  why5       String
 
   @@unique([analysisId, position])
 }

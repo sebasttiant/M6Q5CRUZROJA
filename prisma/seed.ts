@@ -45,7 +45,7 @@ async function seedDemo() {
         { category: "METODO", valuation: 6, subcauses: { create: [{ description: "Control previo ambiguo", impact: 3 }, { description: "Responsable no asignado", impact: 2 }] } },
         { category: "MATERIALES", valuation: 0 }, { category: "MAQUINARIA_EQUIPOS", valuation: 0 }, { category: "MEDIO_AMBIENTE", valuation: 1, subcauses: { create: [{ description: "Presión por tiempo", impact: 1 }] } },
       ] },
-      mainCauses: { create: [{ position: 1, cause: "Verificación incompleta", subcause: "Control previo ambiguo", why1: "No se revisaron todos los elementos", why2: "La lista no exigía confirmación individual", why3: "El procedimiento agrupaba controles distintos", why4: "No se había revisado el riesgo del alistamiento", why5: "No existe un dueño formal del punto de control" }] },
+      mainCauses: { create: [{ position: 1, cause: "Método", subcause: "Control previo ambiguo", why1: "No se revisaron todos los elementos", why2: "La lista no exigía confirmación individual", why3: "El procedimiento agrupaba controles distintos" }] },
     },
   });
 }
