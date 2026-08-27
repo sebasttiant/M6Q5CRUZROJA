@@ -70,7 +70,9 @@ La valoración multiplica únicamente los impactos diligenciados (1 bajo, 2 medi
  SI(Y(F30="";F31="";F32<>"");F32;0)))))))
 ```
 
-`calculateValuation` cubre las ocho ramas de esa fórmula con una prueba por rama.
+La columna `F` del formato valida contra la lista `"1, 2, 3"` con `allowBlank`, así que una celda de impacto solo puede estar vacía o valer 1, 2 o 3. `calculateValuation` se compara contra una transcripción literal de `G30` en las 64 combinaciones que esas tres celdas pueden alcanzar, además de una prueba por cada una de las ocho ramas.
+
+Las seis categorías usan la misma fórmula sobre su propio bloque (`G30`, `G33`, `G36`, `G39`, `G42`, `G45`), y cada resultado ocupa una celda combinada de tres filas (`G30:G32`): una valoración por categoría.
 
 ## Causas principales
 

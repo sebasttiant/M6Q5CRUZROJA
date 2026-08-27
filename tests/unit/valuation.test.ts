@@ -81,3 +81,35 @@ describe("rankMainCauseCandidates", () => {
     expect(rankMainCauseCandidates(CATEGORIES.map(({ key }) => ({ category: key, subcauses: [] })))).toEqual([]);
   });
 });
+
+/**
+ * Literal transcription of AC-43!G30. Cells hold "" when blank and the list validation on
+ * F30:F32 only offers 1, 2 and 3, so this covers every state the format can reach.
+ */
+function spreadsheetG30(f30: number | "", f31: number | "", f32: number | ""): number {
+  if (f30 !== "" && f31 !== "" && f32 !== "") return f30 * f31 * f32;
+  if (f30 !== "" && f31 !== "" && f32 === "") return f30 * f31;
+  if (f30 !== "" && f31 === "" && f32 !== "") return f30 * f32;
+  if (f30 !== "" && f31 === "" && f32 === "") return f30;
+  if (f30 === "" && f31 !== "" && f32 !== "") return f31 * f32;
+  if (f30 === "" && f31 !== "" && f32 === "") return f31;
+  if (f30 === "" && f31 === "" && f32 !== "") return f32;
+  return 0;
+}
+
+const CELL_STATES: Array<number | ""> = ["", 1, 2, 3];
+
+describe("calculateValuation against every reachable state of AC-43!G30", () => {
+  const combinations = CELL_STATES.flatMap((f30) =>
+    CELL_STATES.flatMap((f31) => CELL_STATES.map((f32) => [f30, f31, f32] as const)),
+  );
+
+  it("covers all 64 combinations the three impact cells can hold", () => {
+    expect(combinations).toHaveLength(64);
+  });
+
+  it.each(combinations)("F30=%s F31=%s F32=%s", (f30, f31, f32) => {
+    const asImpacts = [f30, f31, f32].map((cell) => (cell === "" ? null : cell));
+    expect(calculateValuation(asImpacts)).toBe(spreadsheetG30(f30, f31, f32));
+  });
+});
